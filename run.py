@@ -1,6 +1,5 @@
 import gspread
 from google.oauth2.service_account import Credentials
-from pprint import pprint
 
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -12,6 +11,7 @@ CREDS = Credentials.from_service_account_file('creds.json')
 SCOPED_CREDS = CREDS.with_scopes(SCOPE)
 GSPREAD_CLIENT = gspread.authorize(SCOPED_CREDS)
 SHEET = GSPREAD_CLIENT.open('love_sandwiches')
+
 
 def get_sales_data():
 
@@ -29,12 +29,13 @@ def get_sales_data():
         data_str = input("Enter your data here: ")
 
         sales_data = data_str.split(",")
-        
+
         if validate_data(sales_data):
             print("Data is valid!")
             break
-    
+
     return sales_data
+
 
 def validate_data(values):
     """
@@ -51,7 +52,7 @@ def validate_data(values):
     except ValueError as e:
         print(f"Invalid data! {e}, please try again. \n")
         return False
-    
+
     return True
 
 
@@ -77,12 +78,12 @@ def calculate_surplus_data(sales_row):
     print("Calculating surplus data...\n")
     stock = SHEET.worksheet("stock").get_all_values()
     stock_row = stock[-1]
-    
+
     surplus_data = []
     for stock, sales in zip(stock_row, sales_row):
         surplus = int(stock) - sales
         surplus_data.append(surplus)
-    
+
     return surplus_data
 
 
@@ -117,6 +118,19 @@ def calculate_stock_data(data):
 
     return new_stock_data
 
+
+def get_stock_values(data):
+    """
+    Creates dictionary with sandwich headings as keys and stock
+    for next market day as values
+    """
+    headings = SHEET.worksheet("stock").get_all_values()[0]
+
+    print("Make the following sandwiches for next market day: \n")
+    stock_data = dict(zip(headings, data))
+    return stock_data
+
+
 def main():
     """
     Run all program functions
@@ -129,6 +143,8 @@ def main():
     sales_columns = get_last_five_entries_sales()
     stock_data = calculate_stock_data(sales_columns)
     update_worksheet(stock_data, "stock")
+    stock_values = get_stock_values(stock_data)
+
 
 print("Welcome to Love Sandwiches Data Automation\n")
 main()
